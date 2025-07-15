@@ -12,7 +12,6 @@ const Calculate = () => {
   const [alt, setAlternatif] = useState([]);
   const [calculate, setCalculate] = useState([]);
   const [normalizedMatrix, setNormalizedMatrix] = useState([]);
-
   const fetchData = async () => {
     try {
       const [

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
@@ -8,10 +9,11 @@ const AddCalculate = () => {
     criteria_id: "",
     nilai: "",
   });
-
+  
   const [alternatives, setAlternatives] = useState([]);
   const [criterias, setCriterias] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const Navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,7 +57,7 @@ const AddCalculate = () => {
         },
       }).then(() => {
         setIsLoading(false);
-        window.location.reload();
+        Navigate(0);
       });
     } catch (error) {
       Swal.fire({

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
@@ -8,7 +9,9 @@ const EditAlternative = ({ altId, onSuccess }) => {
     nama: "",
     atribut: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAlternative = async () => {
@@ -39,7 +42,7 @@ const EditAlternative = ({ altId, onSuccess }) => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/alternatives/${altId}`,
+        `https://rmdsketch.pythonanywhere.com/alternatives/${altId}`,
         alt
       );
       Swal.fire({
@@ -51,7 +54,7 @@ const EditAlternative = ({ altId, onSuccess }) => {
         },
       }).then(() => {
         onSuccess();
-        window.location.reload();
+        navigate(0);
       });
       setIsLoading(false);
     } catch (error) {

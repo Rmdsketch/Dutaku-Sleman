@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
@@ -7,8 +8,9 @@ const AddAlternative = () => {
     nama: "",
     atribut: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const Navigate = useNavigate();
   const handleChange = (e) => {
     setAlternatif({
       ...alt,
@@ -32,7 +34,7 @@ const AddAlternative = () => {
           confirmButton: "btn btn-success btn-md px-4 me-md-2",
         },
       }).then(() => {
-        window.location.reload();
+        navigate(0);
       });
       setIsLoading(false);
     } catch (error) {

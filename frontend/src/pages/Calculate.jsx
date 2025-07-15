@@ -51,7 +51,7 @@ const Calculate = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/calculates/${id}`);
+        await axios.delete(`https://rmdsketch.pythonanywhere.com/calculates/${id}`);
         Swal.fire({
           icon: "success",
           title: "Berhasil",

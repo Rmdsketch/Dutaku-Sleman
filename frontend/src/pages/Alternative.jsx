@@ -15,7 +15,7 @@ const Alternative = () => {
 
   const fetchAlternative = async () => {
     try {
-      const response = await axios.get("http://rmdsketch.pythonanywhere.com/alternatives");
+      const response = await axios.get("https://rmdsketch.pythonanywhere.com/alternatives");
       setAlternatif(response.data);
     } catch (error) {
       console.error("Gagal memuat data, silahkan coba lagi nanti");
@@ -37,7 +37,7 @@ const Alternative = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://rmdsketch.pythonanywhere.com/alternatives/${id}`);
+          await axios.delete(`https://rmdsketch.pythonanywhere.com/alternatives/${id}`);
           Swal.fire({
             icon: "success",
             title: "Berhasil Menghapus",

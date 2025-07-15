@@ -21,10 +21,10 @@ const Calculate = () => {
         calculateResponse,
         sawResponse,
       ] = await Promise.all([
-        axios.get("http://rmdsketch.pythonanywhere.com/criterias"),
-        axios.get("http://rmdsketch.pythonanywhere.com/alternatives"),
-        axios.get("http://rmdsketch.pythonanywhere.com/calculates"),
-        axios.get("http://rmdsketch.pythonanywhere.com/saw"),
+        axios.get("https://rmdsketch.pythonanywhere.com/criterias"),
+        axios.get("https://rmdsketch.pythonanywhere.com/alternatives"),
+        axios.get("https://rmdsketch.pythonanywhere.com/calculates"),
+        axios.get("https://rmdsketch.pythonanywhere.com/saw"),
       ]);
       setCriteria(criteriaResponse.data);
       setAlternatif(alternatifResponse.data);

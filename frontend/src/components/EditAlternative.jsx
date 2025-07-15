@@ -15,7 +15,7 @@ const EditAlternative = ({ altId, onSuccess }) => {
       if (altId) {
         try {
           const response = await axios.get(
-            `http://localhost:5000/alternatives/${altId}`
+            `https://rmdsketch.pythonanywhere.com/alternatives/${altId}`
           );
           setAlternatif(response.data);
         } catch (error) {

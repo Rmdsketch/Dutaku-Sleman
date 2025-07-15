@@ -15,7 +15,7 @@ const Result = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://rmdsketch.pythonanywhere.com/saw");
+        const response = await axios.get("https://rmdsketch.pythonanywhere.com/saw");
         setPreferences(response.data.preferences);
         setRankedAlternatives(response.data.rankedAlternatives);
 

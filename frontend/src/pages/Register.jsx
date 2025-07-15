@@ -66,7 +66,7 @@ const Register = () => {
     const { terms, ...submitData } = formData;
     try {
       const response = await axios.post(
-        "http://rmdsketch.pythonanywhere.com/auth/register",
+        "https://rmdsketch.pythonanywhere.com/auth/register",
         submitData
       );
       Swal.fire({

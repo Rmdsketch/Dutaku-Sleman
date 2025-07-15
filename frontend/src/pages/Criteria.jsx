@@ -10,7 +10,7 @@ const Criteria = () => {
 
   const fetchCriteria = async () => {
     try {
-      const response = await axios.get("http://rmdsketch.pythonanywhere.com/criterias");
+      const response = await axios.get("https://rmdsketch.pythonanywhere.com/criterias");
       setCriteria(response.data);
     } catch (error) {
       console.error("Gagal memuat data, silahkan coba lagi nanti");

@@ -67,7 +67,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://rmdsketch.pythonanywhere.com/auth/login",
+        "https://rmdsketch.pythonanywhere.com/auth/login",
         formData
       );
 

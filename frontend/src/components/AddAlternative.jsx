@@ -21,7 +21,7 @@ const AddAlternative = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://rmdsketch.pythonanywhere.com/alternatives",
+        "https://rmdsketch.pythonanywhere.com/alternatives",
         alt
       );
       Swal.fire({

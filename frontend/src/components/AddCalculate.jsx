@@ -17,12 +17,12 @@ const AddCalculate = () => {
     const fetchData = async () => {
       try {
         const alternativesResponse = await axios.get(
-          "http://rmdsketch.pythonanywhere.com/alternatives"
+          "https://rmdsketch.pythonanywhere.com/alternatives"
         );
         setAlternatives(alternativesResponse.data);
 
         const criteriasResponse = await axios.get(
-          "http://rmdsketch.pythonanywhere.com/criterias"
+          "https://rmdsketch.pythonanywhere.com/criterias"
         );
         setCriterias(criteriasResponse.data);
       } catch (error) {
@@ -43,7 +43,7 @@ const AddCalculate = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://rmdsketch.pythonanywhere.com/calculates",
+        "https://rmdsketch.pythonanywhere.com/calculates",
         calculate
       );
       Swal.fire({

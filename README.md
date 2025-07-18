@@ -1,4 +1,3 @@
-
 # Dutaku Sleman
 
 ![Logo DutaKu](/frontend/public/assets/img/logo-DutaKu.png)
@@ -9,7 +8,7 @@ Dutaku Sleman is a web-based application for the selection of Tourism Ambassador
 
 ## Author
 
-*   **RMD-SKETCH**
+*   **Muhamad Ramadani**
 
 ## Tech Stack
 
@@ -17,15 +16,14 @@ Dutaku Sleman is a web-based application for the selection of Tourism Ambassador
     *   ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
     *   ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
     *   ![Bootstrap](https://img.shields.io/badge/bootstrap-%238511FA.svg?style=for-the-badge&logo=bootstrap&logoColor=white)
-    *   ![ApexCharts](https://img.shields.io/badge/apexcharts-%2300E396.svg?style=for-the-badge&logo=apexcharts&logoColor=white)
-    *   ![ECharts](https://img.shields.io/badge/echarts-%23293C55.svg?style=for-the-badge&logo=echarts&logoColor=white)
-    *   ![SweetAlert2](https://img.shields.io/badge/sweetalert2-%233085d6.svg?style=for-the-badge&logo=sweetalert2&logoColor=white)
+
 *   **Backend:**
-    *   ![Node.js](https://img.shields.io/badge/node.js-%23393.svg?style=for-the-badge&logo=nodedotjs&logoColor=%23339933)
-    *   ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=white)
+    *   ![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
+    *   ![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)
     *   ![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
 *   **Deployment:**
     *   ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
+    *   ![PythonAnywhere](https://img.shields.io/badge/pythonanywhere-%23195181.svg?style=for-the-badge&logo=pythonanywhere&logoColor=white)
 
 ## Project Structure
 
@@ -87,7 +85,7 @@ To get a local copy up and running follow these simple example steps.
 
 1.  Clone the repo
     ```sh
-    git clone https://github.com/your_username_/Dutaku-sleman.git
+    git clone https://github.com/Rmdsketch/Dutaku-sleman.git
     ```
 2.  Install NPM packages
     ```sh
@@ -115,4 +113,4 @@ To get a local copy up and running follow these simple example steps.
 
 ## Contact
 
-Project Link: [https://github.com/your_username_/Dutaku-sleman](https://github.com/your_username_/Dutaku-sleman)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/muhamad-ramadani-937976245/)

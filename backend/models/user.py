@@ -2,6 +2,7 @@ from sqlalchemy import Enum
 from flask_bcrypt import Bcrypt
 from config import db
 from enum import Enum as PyEnum
+from datetime import datetime, timezone
 
 bcrypt = Bcrypt()
 
@@ -16,7 +17,9 @@ class User(db.Model):
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
-    role = db.Column(Enum(*[role.value for role in Role], name="role_enum"), nullable=False,)
+    role = db.Column(Enum(*[role.value for role in Role], name="role_enum"), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
     def __init__(self, username, email, password, role):
         self.username = username

@@ -5,12 +5,15 @@ from datetime import timedelta
 from models.user import User, Role
 from schemas.user import user_schema
 from config import db
+from limiter import limiter
 
 class Login(Resource):
+    decorators = [limiter.limit("5 per minute")]
+
     def post(self):
         json_data = request.get_json()
         if not json_data:
-            return {"message": "Validasi gagal", "errors": {"Tidak ada data!"}}, 400
+            return {"message": "Validasi gagal", "errors": "Tidak ada data!"}, 400
 
         username = json_data.get("username")
         password = json_data.get("password")
@@ -27,8 +30,12 @@ class Login(Resource):
             return {"message": "Error: username atau password salah!"}, 401
 
         token = create_access_token(
-            identity={"id": user.id, "username": user.username, "role": user.role},
-            expires_delta=timedelta(minutes=10),
+            identity=str(user.id),
+            additional_claims={
+                "username": user.username,
+                "role": user.role,
+            },
+            expires_delta=timedelta(minutes=60),
         )
 
         return {
@@ -39,10 +46,12 @@ class Login(Resource):
 
 
 class Register(Resource):
+    decorators = [limiter.limit("5 per minute")]
+
     def post(self):
         json_data = request.get_json()
         if not json_data:
-            return {"message": "Validasi gagal", "errors": {"Data tidak ada!"}}, 400
+            return {"message": "Validasi gagal", "errors": "Data tidak ada!"}, 400
 
         errors = user_schema.validate(json_data)
         if errors:

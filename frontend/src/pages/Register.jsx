@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -13,20 +13,14 @@ const Register = () => {
   });
 
   const [error, setError] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const navigate = useNavigate();
 
-  const hidePassword = () => {
-    const passwordInput = document.getElementById("yourPassword");
-    const eyeIcon = document.getElementById("eyeIcon");
-
-    if (passwordInput.type === "password") {
-      passwordInput.type = "text";
-      eyeIcon.className = "bi bi-eye-slash";
-    } else {
-      passwordInput.type = "password";
-      eyeIcon.className = "bi bi-eye";
-    }
-  };
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsReady(true), 150);
+    return () => clearTimeout(timeout);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -42,30 +36,31 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const InvalidInput = {};
+    const invalidInput = {};
     if (!formData.username) {
-      InvalidInput.username = "Masukan username disini!";
+      invalidInput.username = "Masukkan username di sini!";
     }
     if (!formData.email) {
-      InvalidInput.email = "Masukan email valid disini!";
+      invalidInput.email = "Masukkan email valid di sini!";
     }
     if (!formData.password) {
-      InvalidInput.password = "Masukan password disini!";
+      invalidInput.password = "Masukkan password di sini!";
     }
     if (!formData.role) {
-      InvalidInput.role = "Pilih salah satu role!";
+      invalidInput.role = "Pilih salah satu role!";
     }
     if (!formData.terms) {
-      InvalidInput.terms = "Anda harus menyetujui syarat dan ketentuan!";
+      invalidInput.terms = "Anda harus menyetujui syarat dan ketentuan!";
     }
-    if (Object.keys(InvalidInput).length > 0) {
-      setError(InvalidInput);
+    if (Object.keys(invalidInput).length > 0) {
+      setError(invalidInput);
       return;
     }
 
     const { terms, ...submitData } = formData;
     try {
       const response = await axios.post(
+        // "http://localhost:5000/auth/register",
         "https://rmdsketch.pythonanywhere.com/auth/register",
         submitData
       );
@@ -82,7 +77,7 @@ const Register = () => {
       if (error.response && error.response.data) {
         const { message, errors } = error.response.data;
         setError({
-          ...InvalidInput,
+          ...invalidInput,
           ...errors,
         });
 
@@ -107,181 +102,169 @@ const Register = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
-    <div className="container h-100">
-      <section className="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-        <div className="row align-items-center justify-content-center">
-          <div className="col-10 col-sm-8 col-lg-6">
-            <img
-              src="assets/img/logo-DutaKu.png"
-              className="img-fluid"
-              alt="Logo Duta Indonesia"
-              width="800"
-              height="500"
-            />
+    <div className={`auth-page ${isReady ? "is-ready" : ""}`}>
+      <div className="auth-aurora aurora-one" aria-hidden="true"></div>
+      <div className="auth-aurora aurora-two" aria-hidden="true"></div>
+      <div className="auth-aurora aurora-three" aria-hidden="true"></div>
+      <div className="auth-grid-overlay" aria-hidden="true"></div>
+      <section className="auth-wrapper d-flex flex-column align-items-center justify-content-center">
+        <div className="mb-4 d-flex align-items-center justify-content-center gap-2">
+          <img src="assets/img/icon-DutaKu.png" alt="DutaKu Icon" className="auth-logo" />
+          <div className="text-start">
+            <h4 className="mb-0 fw-bold auth-brand-title">DutaKu Sleman</h4>
           </div>
-          <div className="col-lg-5 col-md-4 d-flex flex-column align-items-center justify-content-center">
-            <div className="d-flex justify-content-center py-4">
-              <div className="card mb-3 rounded-3 shadow">
-                <div className="card-body">
-                  <div className="pt-4 pb-2">
-                    <h5 className="card-title text-center pb-0 fs-4">
-                      Buat Akun
-                    </h5>
-                    <p className="text-center small">
-                      Masukkan detail untuk membuat akun
-                    </p>
+        </div>
+
+        <div className="auth-panel card shadow-sm w-100">
+          <div className="card-body p-4 p-md-5">
+            <div className="text-center mb-4">
+              <h4 className="fw-bold mb-1 auth-title">Buat Akun Baru</h4>
+            </div>
+
+            <form className="auth-form" noValidate onSubmit={handleSubmit}>
+              <div className="row g-3">
+                <div className="col-6">
+                  <label htmlFor="yourUsername" className="form-label auth-label">
+                    Username
+                  </label>
+                  <div className="control-surface">
+                    <input
+                      type="text"
+                      name="username"
+                      className={`form-control ${error.username ? "is-invalid" : ""}`}
+                      id="yourUsername"
+                      required
+                      value={formData.username}
+                      onChange={handleChange}
+                      placeholder="Masukan username"
+                    />
                   </div>
+                  {error.username && (
+                    <p className="invalid-feedback d-block">{error.username}</p>
+                  )}
+                </div>
 
-                  <form
-                    className="row g-3 needs-validation"
-                    method="POST"
-                    action="/register"
-                    noValidate
-                    onSubmit={handleSubmit}
+                <div className="col-6">
+                  <label htmlFor="yourEmail" className="form-label auth-label">
+                    Email
+                  </label>
+                  <div className="control-surface has-addon">
+                    <span className="input-addon">@</span>
+                    <input
+                      type="email"
+                      name="email"
+                      className={`form-control ${error.email ? "is-invalid" : ""}`}
+                      id="yourEmail"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Masukkan email aktif"
+                    />
+                  </div>
+                  {error.email && (
+                    <p className="invalid-feedback d-block">{error.email}</p>
+                  )}
+                </div>
+
+                <div className="col-6">
+                  <label htmlFor="yourPassword" className="form-label auth-label">
+                    Password
+                  </label>
+                  <div
+                    className={`control-surface password ${error.password ? "has-error" : ""}`}
                   >
-                    <div className="col-12">
-                      <label htmlFor="yourUsername" className="form-label">
-                        Username
-                      </label>
-                      <div className="input-group has-validation">
-                        <input
-                          type="text"
-                          name="username"
-                          className={`form-control ${error.username ? "is-invalid" : ""
-                            }`}
-                          id="yourUsername"
-                          required
-                          value={formData.username}
-                          onChange={handleChange}
-                        />
-                        {error.username && (
-                          <p className="invalid-feedback">{error.username}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <label htmlFor="yourEmail" className="form-label">
-                        Email
-                      </label>
-                      <div className="input-group has-validation">
-                        <span
-                          className="input-group-text"
-                          id="inputGroupPrepend"
-                        >
-                          @
-                        </span>
-                        <input
-                          type="email"
-                          name="email"
-                          className={`form-control ${error.email ? "is-invalid" : ""
-                            }`}
-                          id="yourEmail"
-                          required
-                          value={formData.email}
-                          onChange={handleChange}
-                        />
-                        {error.email && (
-                          <p className="invalid-feedback">{error.email}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <label htmlFor="yourPassword" className="form-label">
-                        Password
-                      </label>
-                      <div className="input-group has-validation">
-                        <button
-                          className="input-group-text"
-                          id="inputGroupPrepend"
-                          onClick={hidePassword}
-                          type="button"
-                        >
-                          <i className="bi bi-eye" id="eyeIcon"></i>
-                        </button>
-                        <input
-                          type="password"
-                          name="password"
-                          className={`form-control ${error.password ? "is-invalid" : ""
-                            }`}
-                          id="yourPassword"
-                          required
-                          value={formData.password}
-                          onChange={handleChange}
-                        />
-                        {error.password && (
-                          <p className="invalid-feedback">{error.password}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <label htmlFor="role" className="form-label">
-                        Role
-                      </label>
-                      <div className="col-lg-12">
-                        <select
-                          id="role"
-                          name="role"
-                          className={`form-select ${error.role ? "is-invalid" : ""
-                            }`}
-                          value={formData.role}
-                          onChange={handleChange}
-                        >
-                          <option value="" disabled>
-                            Pilih Role
-                          </option>
-                          <option value="Admin">Admin</option>
-                          <option value="Juri">Juri</option>
-                        </select>
-                        {error.role && (
-                          <p className="invalid-feedback">{error.role}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <div className="form-check">
-                        <input
-                          className={`form-check-input ${error.terms ? "is-invalid" : ""
-                            }`}
-                          name="terms"
-                          type="checkbox"
-                          value="true"
-                          id="acceptTerms"
-                          required
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              terms: e.target.checked,
-                            })
-                          }
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor="acceptTerms"
-                        >
-                          Saya setuju dan menerima persyaratan
-                        </label>
-                        {error.terms && (
-                          <p className="invalid-feedback">{error.terms}</p>
-                        )}
-                      </div>
-                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      className="form-control"
+                      id="yourPassword"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      className="toggle-visibility"
+                      onClick={togglePasswordVisibility}
+                      aria-label={
+                        showPassword ? "Sembunyikan password" : "Tampilkan password"
+                      }
+                    >
+                      <i
+                        className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+                        aria-hidden="true"
+                      ></i>
+                    </button>
+                  </div>
+                  {error.password && (
+                    <p className="invalid-feedback d-block">{error.password}</p>
+                  )}
+                </div>
 
-                    <div className="col-12">
-                      <button className="btn btn-success w-100" type="submit">
-                        Buat Akun
-                      </button>
-                    </div>
-                    <div className="col-12">
-                      <p className="small mb-0">
-                        Sudah memiliki akun?
-                        <Link to="/login"> Masuk </Link>
-                      </p>
-                    </div>
-                  </form>
+                <div className="col-6">
+                  <label htmlFor="role" className="form-label auth-label">
+                    Role
+                  </label>
+                  <div className="control-surface">
+                    <select
+                      id="role"
+                      name="role"
+                      className={`form-select ${error.role ? "is-invalid" : ""}`}
+                      value={formData.role}
+                      onChange={handleChange}
+                    >
+                      <option value="" disabled>
+                        Pilih Role
+                      </option>
+                      <option value="Admin">Admin</option>
+                      <option value="Juri">Juri</option>
+                    </select>
+                  </div>
+                  {error.role && (
+                    <p className="invalid-feedback d-block">{error.role}</p>
+                  )}
                 </div>
               </div>
-            </div>
+
+              <div>
+                <div className="form-check mt-3 mb-1">
+                  <input
+                    className={`form-check-input ${error.terms ? "is-invalid" : ""}`}
+                    name="terms"
+                    type="checkbox"
+                    value="true"
+                    id="acceptTerms"
+                    checked={formData.terms}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        terms: e.target.checked,
+                      })
+                    }
+                  />
+                  <label className="form-check-label text-muted auth-terms-label" htmlFor="acceptTerms">
+                    Saya setuju dan menerima persyaratan
+                  </label>
+                </div>
+                {error.terms && (
+                  <p className="invalid-feedback d-block">{error.terms}</p>
+                )}
+              </div>
+
+              <button className="btn auth-btn w-100 mt-2" type="submit">Daftar
+              </button>
+
+              <div className="text-center mt-2">
+                <span className="small text-muted me-1">Sudah punya akun?</span>
+                <Link to="/login" className="small auth-link">Masuk</Link>
+              </div>
+            </form>
           </div>
         </div>
       </section>

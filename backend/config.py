@@ -9,12 +9,10 @@ def config_database(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = conn_str.format(
         DBMS="mysql+pymysql",
         user="root",
-        password="adminrmd",
+        password="",
         host="localhost",
         database="spk_duta_pariwisata",
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
-    with app.app_context():
-        db.create_all()

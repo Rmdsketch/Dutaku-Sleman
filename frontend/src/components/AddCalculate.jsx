@@ -1,202 +1,237 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useRef, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const AddCalculate = () => {
-  const [calculate, setCalculate] = useState({
-    alternative_id: "",
-    criteria_id: "",
-    nilai: "",
-  });
-  
-  const [alternatives, setAlternatives] = useState([]);
-  const [criterias, setCriterias] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const Navigate = useNavigate();
+const AddCalculate = ({
+  criterias,
+  alternatives,
+  scoreMap,
+  onRefresh,
+  onOpenModal,
+}) => {
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const alternativesResponse = await axios.get(
-          "https://rmdsketch.pythonanywhere.com/alternatives"
-        );
-        setAlternatives(alternativesResponse.data);
-
-        const criteriasResponse = await axios.get(
-          "https://rmdsketch.pythonanywhere.com/criterias"
-        );
-        setCriterias(criteriasResponse.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setCalculate({ ...calculate, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        "https://rmdsketch.pythonanywhere.com/calculates",
-        calculate
-      );
-      Swal.fire({
-        icon: "success",
-        title: "Berhasil menambahkan Data Penilaian",
-        text: response.data.message,
-        customClass: {
-          confirmButton: "btn btn-success btn-md px-4 me-md-2",
-        },
-      }).then(() => {
-        setIsLoading(false);
-        Navigate(0);
-      });
-    } catch (error) {
+  const getAuthConfig = () => {
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
       Swal.fire({
         icon: "error",
-        title: "Gagal menambahkan Data Penilaian!",
-        text: error.response?.data?.message,
-        customClass: {
-          confirmButton: "btn btn-danger btn-md px-4 me-md-2",
-        },
+        title: "Sesi berakhir",
+        text: "Silakan login kembali untuk melanjutkan.",
+        customClass: { confirmButton: "btn btn-danger btn-md px-4 me-md-2" },
       });
-      setIsLoading(false);
+      return null;
+    }
+    return { headers: { Authorization: `Bearer ${token}` } };
+  };
+
+  const upsertScore = async (alternativeId, criteriaId, value, config) => {
+    if (value === "" || value === null || value === undefined) return;
+    const numericValue = Number(value);
+    const existing = scoreMap?.[alternativeId]?.[criteriaId];
+
+    if (existing?.id) {
+      await axios.patch(
+        // `http://localhost:5000/calculates/${existing.id}`,
+        `https://rmdsketch.pythonanywhere.com/calculates/${existing.id}`,
+        { value: numericValue },
+        config
+      );
+    } else {
+      await axios.post(
+        // "http://localhost:5000/calculates",
+        "https://rmdsketch.pythonanywhere.com/calculates",
+        {
+          alternative_id: alternativeId,
+          criteria_id: criteriaId,
+          value: numericValue,
+        },
+        config
+      );
     }
   };
 
-  return (
-    <div>
-      <div className="row">
-        <div className="col-lg-6">
-          <div className="d-flex justify-content-between mb-3">
-            <button
-              type="button"
-              className="btn btn-success"
-              data-bs-toggle="modal"
-              data-bs-target="#inputCalculateModal"
-            >
-              <i className="bi bi-plus-circle me-2"></i>
-              Tambah
-            </button>
+  const handleDownloadTemplate = () => {
+    if (!criterias.length) {
+      Swal.fire({
+        icon: "info",
+        title: "Kriteria belum tersedia",
+        text: "Tambahkan kriteria terlebih dahulu sebelum mengunduh template.",
+        customClass: { confirmButton: "btn btn-info btn-md px-4 me-md-2" },
+      });
+      return;
+    }
+    const headers = ["Alternatif", ...criterias.map((c) => c.id)];
+    const exampleRows =
+      alternatives.length > 0
+        ? alternatives.slice(0, 3).map((alt) =>
+          [alt.id, ...criterias.map(() => "")].join(",")
+        )
+        : ["", ...criterias.map(() => "")];
 
-            <div
-              className="modal fade"
-              id="inputCalculateModal"
-              tabIndex="-1"
-              aria-labelledby="modalLabel"
-            >
-              <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title" id="modalLabel">
-                      Tambah Penilaian
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    <form onSubmit={handleSubmit}>
-                      <div className="mb-3">
-                        <label htmlFor="alternative_id" className="form-label">
-                          Pilih Alternatif
-                        </label>
-                        <select
-                          className="form-select"
-                          id="alternative_id"
-                          name="alternative_id"
-                          value={calculate.alternative_id}
-                          onChange={handleChange}
-                          required
-                        >
-                          <option value="" disabled>
-                            Pilih Alternatif
-                          </option>
-                          {alternatives.map((alternative) => (
-                            <option key={alternative.id} value={alternative.id}>
-                              {alternative.id} - {alternative.nama}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="criteria_id" className="form-label">
-                          Pilih Kriteria
-                        </label>
-                        <select
-                          className="form-select"
-                          id="criteria_id"
-                          name="criteria_id"
-                          value={calculate.criteria_id}
-                          onChange={handleChange}
-                          required
-                        >
-                          <option value="" disabled>
-                            Pilih Kriteria
-                          </option>
-                          {criterias.map((criteria) => (
-                            <option key={criteria.id} value={criteria.id}>
-                              {criteria.id} - {criteria.kriteria}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="nilai" className="form-label">
-                          Nilai
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          className="form-control"
-                          id="nilai"
-                          name="nilai"
-                          placeholder="Masukkan Nilai"
-                          value={calculate.nilai}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                      <div className="text-center">
-                        <button
-                          type="submit"
-                          className="btn btn-success"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? (
-                            <span
-                              className="spinner-border spinner-border-sm"
-                              role="status"
-                              aria-hidden="true"
-                            ></span>
-                          ) : (
-                            <>
-                              <i className="bi bi-floppy me-2"></i> Simpan
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    const csvContent = [headers.join(","), ...exampleRows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const now = new Date();
+    const formattedDate = `${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()}`;
+
+    link.href = url;
+    link.download = `data-penilaian-${formattedDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const processCsv = async (text, config) => {
+    const lines = text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (lines.length < 2) {
+      throw new Error("File CSV kosong atau hanya memiliki header.");
+    }
+
+    const headers = lines[0].split(",").map((h) => h.trim());
+    const expectedHeaders = ["Alternatif", ...criterias.map((c) => c.id)];
+
+    // validasi jumlah header (kolom) pada CSV
+    if (headers.length !== expectedHeaders.length) {
+      throw new Error(
+        `Header tidak sesuai. Gunakan kolom: ${expectedHeaders.join(", ")}`
+      );
+    }
+
+    // validasi nama header pertama harus "Alternatif"
+    if (headers[0] !== expectedHeaders[0]) {
+      throw new Error(`Kolom pertama harus "${expectedHeaders[0]}", bukan "${headers[0]}"`);
+    }
+
+    // validasi kriteria id di header
+    const mismatchedColumns = [];
+    for (let i = 1; i < expectedHeaders.length; i += 1) {
+      if ((headers[i] || "").toUpperCase() !== expectedHeaders[i].toUpperCase()) {
+        mismatchedColumns.push({
+          expected: expectedHeaders[i],
+          actual: headers[i],
+        });
+      }
+    }
+
+    if (mismatchedColumns.length > 0) {
+      const mismatchText = mismatchedColumns
+        .map((m) => `Kolom ${m.expected} tertulis ${m.actual}`)
+        .join(", ");
+      throw new Error(`Kolom kriteria tidak sesuai: ${mismatchText}`);
+    }
+
+    // Validasi data baris
+    let importedCount = 0;
+    for (let i = 1; i < lines.length; i += 1) {
+      const cells = lines[i].split(",").map((cell) => cell.trim());
+      const alternativeId = cells[0];
+      if (!alternativeId) continue;
+
+      for (let j = 1; j < expectedHeaders.length; j += 1) {
+        const criteria = criterias[j - 1];
+        const rawValue = cells[j];
+        if (rawValue === undefined || rawValue === "") continue;
+        await upsertScore(alternativeId, criteria.id, rawValue, config);
+        importedCount += 1;
+      }
+    }
+
+    if (importedCount === 0) {
+      throw new Error("Tidak ada data nilai yang valid untuk diimport.");
+    }
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const config = getAuthConfig();
+    if (!config) {
+      event.target.value = "";
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      await processCsv(text, config);
+      Swal.fire({
+        icon: "success",
+        title: "Import Berhasil",
+        text: "Data penilaian berhasil diperbarui dari file CSV.",
+        customClass: { confirmButton: "btn btn-success btn-md px-4" },
+      });
+      onRefresh?.();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Format CSV Tidak Valid",
+        text: error.message || "Silakan periksa format file CSV Anda.",
+        customClass: { confirmButton: "btn btn-danger btn-md px-4" },
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  const openFilePicker = () => {
+    if (!criterias.length) {
+      Swal.fire({
+        icon: "info",
+        title: "Kriteria belum tersedia",
+        text: "Tambahkan kriteria sebelum melakukan import.",
+        customClass: { confirmButton: "btn btn-info btn-md px-4 me-md-2" },
+      });
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <>
+      <div className="calculate-toolbar">
+        <button
+          type="button"
+          className="btn btn-success"
+          onClick={() => onOpenModal?.()}
+        >
+          <i className="bi bi-plus-circle me-2"></i>
+          Tambah Nilai
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-secondary"
+          onClick={openFilePicker}
+          disabled={isImporting}
+        >
+          <i className="bi bi-upload me-2"></i>
+          {isImporting ? "Mengimpor..." : "Import CSV"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-secondary"
+          onClick={handleDownloadTemplate}
+        >
+          <i className="bi bi-download me-2"></i>
+          Download CSV
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          hidden
+          onChange={handleImportFile}
+        />
       </div>
-    </div>
+    </>
   );
 };
 

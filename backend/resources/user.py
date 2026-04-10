@@ -1,10 +1,14 @@
 from flask_restful import Resource
 from flask import request
+from flask_jwt_extended import jwt_required
 from schemas.user import user_schema, users_schema
 from config import db
 from models.user import User, Role
+from limiter import limiter
 
 class UserRoute(Resource):
+    decorators = [jwt_required(), limiter.limit("30 per minute")]
+
     def get(self, identifier=None):
         if identifier is not None:
             user = User.query.get(identifier)
@@ -16,7 +20,6 @@ class UserRoute(Resource):
             return users_schema.dump(users), 200
 
     def delete(self, identifier):
-
         user = User.query.get(identifier)
         if not user:
             return {"message": "User tidak ditemukan"}, 404
@@ -24,11 +27,12 @@ class UserRoute(Resource):
         db.session.delete(user)
         db.session.commit()
 
-        return {"status": "User dihapus"}, 204
+        return {"status": "User dihapus"}, 200
 
+    def put(self, identifier=None):
+        if not identifier:
+            return {"message": "Error: ID user harus disertakan di URL"}, 400
 
-
-    def put(self, identifier):
         json_data = request.get_json()
         if not json_data:
             return {"message": "Error: Tidak ada data!"}, 400
@@ -56,7 +60,10 @@ class UserRoute(Resource):
         db.session.commit()
         return {"status": "Success", "data": user_schema.dump(user)}, 200
 
-    def patch(self, identifier):
+    def patch(self, identifier=None):
+        if not identifier:
+            return {"message": "Error: ID user harus disertakan di URL"}, 400
+
         user = User.query.get(identifier)
         if not user:
             return {"message": "Error: User tidak ditemukan"}, 404

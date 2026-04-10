@@ -1,18 +1,54 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import Header from "../components/Header";
-import AddModal from "../components/AddCalculate";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
+import AddModal from "../components/AddCalculate";
+import CalculateModal from "../components/CalculateModal";
 
 const Calculate = () => {
   const [crit, setCriteria] = useState([]);
   const [alt, setAlternatif] = useState([]);
   const [calculate, setCalculate] = useState([]);
-  const [normalizedMatrix, setNormalizedMatrix] = useState([]);
+  const [normalizedMatrix, setNormalizedMatrix] = useState({});
+  const [preferences, setPreferences] = useState({});
+  const [scoreMap, setScoreMap] = useState({});
+  const [modalState, setModalState] = useState({
+    open: false,
+    alternativeId: null,
+  });
+
+  const getAuthConfig = () => {
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      console.error("Token tidak ditemukan, silakan login kembali.");
+      return null;
+    }
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  };
+
+  const buildScoreMap = (records) => {
+    const grouped = {};
+    records.forEach((item) => {
+      if (!grouped[item.alternative_id]) grouped[item.alternative_id] = {};
+      grouped[item.alternative_id][item.criteria_id] = {
+        id: item.id,
+        value: item.value,
+      };
+    });
+    return grouped;
+  };
+
   const fetchData = async () => {
+    const config = getAuthConfig();
+    if (!config) return;
     try {
       const [
         criteriaResponse,
@@ -20,15 +56,21 @@ const Calculate = () => {
         calculateResponse,
         sawResponse,
       ] = await Promise.all([
-        axios.get("https://rmdsketch.pythonanywhere.com/criterias"),
-        axios.get("https://rmdsketch.pythonanywhere.com/alternatives"),
-        axios.get("https://rmdsketch.pythonanywhere.com/calculates"),
-        axios.get("https://rmdsketch.pythonanywhere.com/saw"),
+        // axios.get("http://localhost:5000/criterias", config),
+        axios.get("https://rmdsketch.pythonanywhere.com/criterias", config),
+        // axios.get("http://localhost:5000/alternatives", config),
+        axios.get("https://rmdsketch.pythonanywhere.com/alternatives", config),
+        // axios.get("http://localhost:5000/calculates", config),
+        axios.get("https://rmdsketch.pythonanywhere.com/calculates", config),
+        // axios.get("http://localhost:5000/saw", config),
+        axios.get("https://rmdsketch.pythonanywhere.com/saw", config),
       ]);
       setCriteria(criteriaResponse.data);
       setAlternatif(alternatifResponse.data);
       setCalculate(calculateResponse.data);
-      setNormalizedMatrix(sawResponse.data.normalizedMatrix);
+      setNormalizedMatrix(sawResponse.data.normalizedMatrix || {});
+      setPreferences(sawResponse.data.preferences || {});
+      setScoreMap(buildScoreMap(calculateResponse.data));
     } catch (error) {
       console.error("Gagal memuat data:", error);
     }
@@ -50,7 +92,12 @@ const Calculate = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`https://rmdsketch.pythonanywhere.com/calculates/${id}`);
+        const config = getAuthConfig();
+        if (!config) return;
+        await axios.delete(
+          // `http://localhost:5000/calculates/${id}`,
+          `http://rmdsketch.pythonanywhere.com/calculates/${id}`,
+          config);
         Swal.fire({
           icon: "success",
           title: "Berhasil",
@@ -77,193 +124,224 @@ const Calculate = () => {
     fetchData();
   }, []);
 
+  const handleEditClick = (alternativeId) => {
+    setModalState({ open: true, alternativeId });
+  };
+
+  const openModal = () => {
+    setModalState({ open: true, alternativeId: null });
+  };
+
+  const closeModal = () => {
+    setModalState({ open: false, alternativeId: null });
+  };
+
+  const handleModalSaved = () => {
+    fetchData();
+  };
+
+  const getMatrixValue = (values, criteria) => {
+    if (!values) return 0;
+    if (values[criteria.id] !== undefined) return values[criteria.id];
+    if (values[criteria.name] !== undefined) return values[criteria.name];
+    if (criteria.criteria && values[criteria.criteria] !== undefined) {
+      return values[criteria.criteria];
+    }
+    return 0;
+  };
+
+  const renderMatrixRows = (matrixSource, multiply = false) =>
+    Object.entries(matrixSource).map(([altId, values]) => (
+      <tr key={altId}>
+        <td>{alt.find((item) => item.id === altId)?.id || altId}</td>
+        {crit.map((criterias) => {
+          const baseValue = getMatrixValue(values, criterias);
+          const finalValue = multiply ? baseValue * criterias.weight : baseValue;
+          return <td key={criterias.id}>{finalValue.toFixed(3)}</td>;
+        })}
+      </tr>
+    ));
+
   return (
-    <div>
+    <div className="dashboard-shell">
       <Header />
       <Sidebar />
-      <main id="main" className="main">
-        <div className="pagetitle">
-          <h1>
-            Sistem Pendukung Keputusan Pemilihan Dimas Diajeng Kabupaten Sleman
-          </h1>
-          <nav>
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <Link to="/homepage">Home</Link>
-              </li>
-              <li className="breadcrumb-item active">
-                <Link to="/calculate">Perhitungan</Link>
-              </li>
-            </ol>
-          </nav>
-        </div>
-        <section className="section">
-          <div className="row align-items-top">
-            <div className="col-lg-12">
-              <div className="card">
-                <div className="card-body">
-                  <h5 className="card-title">Tambah Penilaian</h5>
-                  <p className="card-text">
-                    Silakan masukkan seluruh data terkait penilaian ke dalam
-                    formulir yang telah disediakan. Pastikan semua data diisi
-                    dengan lengkap tanpa ada yang terlewatkan, karena setiap
-                    informasi sangat penting untuk proses selanjutnya.
-                  </p>
-                  <AddModal />
-
-                  <div className="table-responsive">
-                    <table className="table table-striped mb-0">
-                      <caption>Matrik Keputusan (X)</caption>
-                      <thead>
-                        <tr className="table-success">
-                          <th rowSpan="2" className="text-center">
-                            Alternatif
-                          </th>
-                          <th colSpan={crit.length} className="text-center">
-                            Kriteria
-                          </th>
-                          <th rowSpan="2" className="text-center">
-                            Aksi
-                          </th>
-                        </tr>
-                        <tr className="table-success">
-                          {crit.map((criterias, i) => (
-                            <th key={i} className="text-center">
-                              {criterias.id}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {alt.map((alt) => (
-                          <tr key={alt.id}>
-                            <td className="text-center">{alt.id}</td>
-                            {crit.map((crit) => {
-                              const calc = calculate.find(
-                                (c) =>
-                                  c.alternative_id === alt.id &&
-                                  c.criteria_id === crit.id
-                              );
-                              return (
-                                <td
-                                  key={`${alt.id}-${crit.id}`}
-                                  className="text-center"
-                                >
-                                  {calc ? calc.nilai : "0"}
-                                </td>
-                              );
-                            })}
-                            <td className="text-center">
-                              <button
-                                className="btn btn-danger btn-sm rounded-0"
-                                type="button"
-                                title="Delete"
-                                onClick={() => handleDelete(alt.id)}
-                              >
-                                <i className="fa fa-trash"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="table-responsive mt-3">
-                    <table className="table table-striped mb-0">
-                      <caption>Matrik Normalisasi (R)</caption>
-                      <thead>
-                        <tr className="table-success">
-                          <th rowSpan="2" className="text-center">
-                            Alternatif
-                          </th>
-                          <th colSpan={crit.length} className="text-center">
-                            Kriteria
-                          </th>
-                        </tr>
-                        <tr className="table-success">
-                          {crit.map((criterias, i) => (
-                            <th key={i} className="text-center">
-                              {criterias.id}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(normalizedMatrix).map(
-                          ([altId, values]) => (
-                            <tr key={altId}>
-                              <td className="text-center">
-                                {alt.find((alt) => alt.id === altId)?.id ||
-                                  altId}
-                              </td>
-                              {crit.map((c) => (
-                                <td className="text-center" key={c.id}>
-                                  {values[c.kriteria]?.toFixed(2) || "0"}
-                                </td>
-                              ))}
-                            </tr>
-                          )
-                        )}
-                        <tr className="table-success">
-                          <th className="text-center">Bobot</th>
-                          {crit.map((criterias, i) => (
-                            <th key={i} className="text-center">
-                              {criterias.bobot}
-                            </th>
-                          ))}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="table-responsive mt-3">
-                    <table className="table table-striped mb-0">
-                      <caption>Matrik Normalisasi (R) * W</caption>
-                      <thead>
-                        <tr className="table-success">
-                          <th rowSpan="2" className="text-center">
-                            Alternatif
-                          </th>
-                          <th colSpan={crit.length} className="text-center">
-                            Kriteria
-                          </th>
-                        </tr>
-                        <tr className="table-success">
-                          {crit.map((criterias, i) => (
-                            <th key={i} className="text-center">
-                              {criterias.id}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(normalizedMatrix).map(
-                          ([altId, values]) => (
-                            <tr key={altId}>
-                              <td className="text-center">
-                                {alt.find((alt) => alt.id === altId)?.id ||
-                                  altId}
-                              </td>
-                              {crit.map((criterias) => (
-                                <td key={criterias.id} className="text-center">
-                                  {(
-                                    (values[criterias.kriteria] || 0) *
-                                    criterias.bobot
-                                  ).toFixed(2)}
-                                </td>
-                              ))}
-                            </tr>
-                          )
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+      <main id="main" className="main dashboard-main">
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <div className="breadcrumb-simple">
+              <Link to="/homepage">Home</Link>
+              <span>/</span>
+              <span className="breadcrumb-current">Perhitungan</span>
             </div>
+            <h1>Perhitungan SAW</h1>
+            <p>
+              Proses perhitungan menggunakan metode Simple Additive Weighting
+              untuk menentukan hasil perangkingan kandidat Dimas Diajeng.
+            </p>
           </div>
-        </section>
+
+          <AddModal
+            criterias={crit}
+            alternatives={alt}
+            scoreMap={scoreMap}
+            onRefresh={fetchData}
+            onOpenModal={openModal}
+          />
+
+          <section className="table-card">
+            <div className="table-header">
+              <h3>Matrik Keputusan (X)</h3>
+              <p>Nilai mentah setiap alternatif pada masing-masing kriteria.</p>
+            </div>
+            <div className="table-responsive ranking-table-wrapper">
+              <table className="table ranking-table">
+                <thead>
+                  <tr>
+                    <th>Alternatif</th>
+                    {crit.map((criterias) => (
+                      <th key={criterias.id}>{criterias.id}</th>
+                    ))}
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                      {alt.map((alternative) => (
+                        <tr key={alternative.id}>
+                      <td>{alternative.id}</td>
+                      {crit.map((criterias) => {
+                        const calc = calculate.find(
+                          (c) =>
+                            c.alternative_id === alternative.id &&
+                            c.criteria_id === criterias.id
+                        );
+                        return (
+                          <td key={`${alternative.id}-${criterias.id}`}>
+                            {calc ? calc.value : "0"}
+                          </td>
+                        );
+                      })}
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="btn btn-success btn-sm rounded-0"
+                            type="button"
+                            title="Edit"
+                            onClick={() => handleEditClick(alternative.id)}
+                          >
+                            <i className="fa fa-edit"></i>
+                          </button>
+                          <button
+                            className="btn btn-danger btn-sm rounded-0"
+                            type="button"
+                            title="Delete"
+                            onClick={() => handleDelete(alternative.id)}
+                          >
+                            <i className="fa fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="table-card">
+            <div className="table-header">
+              <h3>Matrik Normalisasi (R)</h3>
+              <p>Hasil normalisasi nilai untuk menyamakan skala antar kriteria.</p>
+            </div>
+            <div className="table-responsive ranking-table-wrapper">
+              <table className="table ranking-table">
+                <thead>
+                  <tr>
+                    <th>Alternatif</th>
+                    {crit.map((criterias) => (
+                      <th key={criterias.id}>{criterias.id}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>{renderMatrixRows(normalizedMatrix)}</tbody>
+                <tfoot>
+                  <tr>
+                    <th>Bobot</th>
+                    {crit.map((criterias) => (
+                      <th key={criterias.id}>{criterias.weight}</th>
+                    ))}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+
+          <section className="table-card">
+            <div className="table-header">
+              <h3>Matrik Normalisasi × Bobot</h3>
+              <p>
+                Nilai normalisasi yang telah dikalikan dengan bobot setiap
+                kriteria.
+              </p>
+            </div>
+            <div className="table-responsive ranking-table-wrapper">
+              <table className="table ranking-table">
+                <thead>
+                  <tr>
+                    <th>Alternatif</th>
+                    {crit.map((criterias) => (
+                      <th key={criterias.id}>{criterias.id}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>{renderMatrixRows(normalizedMatrix, true)}</tbody>
+              </table>
+            </div>
+          </section>
+          
+          <section className="table-card">
+            <div className="table-header">
+              <h3>Nilai Preferensi (V)</h3>
+              <p>Rekap nilai akhir setiap alternatif.</p>
+            </div>
+            <div className="table-responsive ranking-table-wrapper">
+              <table className="table ranking-table">
+                <thead>
+                  <tr>
+                    <th>Alternatif</th>
+                    <th>Nilai Preferensi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(preferences).length > 0 ? (
+                    Object.entries(preferences).map(([altId, value]) => (
+                      <tr key={altId}>
+                        <td>{altId}</td>
+                        <td>{Number(value).toFixed(3)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="2" className="text-center">
+                        Nilai preferensi belum tersedia.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <CalculateModal
+            show={modalState.open}
+            onClose={closeModal}
+            alternatives={alt}
+            criterias={crit}
+            scoreMap={scoreMap}
+            selectedAltId={modalState.alternativeId}
+            onSaved={handleModalSaved}
+          />
+        </div>
       </main>
       <Footer />
     </div>

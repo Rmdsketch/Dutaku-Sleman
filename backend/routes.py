@@ -1,7 +1,7 @@
 from flask_restful import Api
 from resources.user import UserRoute
 from resources.auth import Login, Register
-from resources.criteria import CriteriaRoute
+from resources.criteria import CriteriaRoute, CriteriaWeightRoute
 from resources.alternative import AlternativeRoute
 from resources.calculate import CalculateRoute
 from resources.saw import SawRoute
@@ -19,6 +19,11 @@ def config_routes(app):
         "/criterias",
         "/criterias/<string:identifier>",
         methods=["GET", "POST", "DELETE", "PUT", "PATCH"],
+    )
+    api.add_resource(
+        CriteriaWeightRoute,
+        "/criterias/weights",
+        methods=["PATCH"],
     )
     api.add_resource(
         AlternativeRoute,

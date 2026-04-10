@@ -37,7 +37,7 @@ const Header = () => {
             src="assets/img/logo.png"
             alt="Logo SPK Dimas Diajeng"
           />
-          <span className="d-none d-lg-block">DutaKu Sleman</span>
+          <span className="logo-text">DutaKu Sleman</span>
         </Link>
       </div>
 

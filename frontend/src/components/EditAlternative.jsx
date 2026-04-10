@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const EditAlternative = ({ altId, onSuccess }) => {
+const EditAlternative = ({ altId, onSuccess, modalId }) => {
   const [alt, setAlternatif] = useState({
     id: "",
-    nama: "",
-    atribut: "",
+    name: "",
+    attribute: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -17,8 +17,20 @@ const EditAlternative = ({ altId, onSuccess }) => {
     const fetchAlternative = async () => {
       if (altId) {
         try {
+          const token =
+            localStorage.getItem("token") || sessionStorage.getItem("token");
+          if (!token) {
+            console.error("Token tidak ditemukan, silakan login kembali.");
+            return;
+          }
           const response = await axios.get(
-            `https://rmdsketch.pythonanywhere.com/alternatives/${altId}`
+            // `http://localhost:5000/alternatives/${altId}`,
+            `https://rmdsketch.pythonanywhere.com/alternatives/${altId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
           setAlternatif(response.data);
         } catch (error) {
@@ -40,10 +52,32 @@ const EditAlternative = ({ altId, onSuccess }) => {
     e.preventDefault();
     setIsLoading(true);
 
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    if (!token) {
+      Swal.fire({
+        icon: "error",
+        title: "Sesi berakhir",
+        text: "Silakan login kembali untuk mengubah data.",
+        customClass: {
+          confirmButton: "btn btn-danger btn-md px-4 me-md-2",
+        },
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.put(
+        // `http://localhost:5000/alternatives/${altId}`,
         `https://rmdsketch.pythonanywhere.com/alternatives/${altId}`,
-        alt
+        alt,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       Swal.fire({
         icon: "success",
@@ -70,14 +104,17 @@ const EditAlternative = ({ altId, onSuccess }) => {
     }
   };
 
+  const modalIdentifier =
+    modalId || (altId ? `editCriteriaModal-${altId}` : "editCriteriaModal");
+
   return (
     <div
       className="modal fade"
-      id={`editCriteriaModal-${altId}`}
+      id={modalIdentifier}
       tabIndex="-1"
       aria-labelledby="modalLabel"
     >
-      <div className="modal-dialog">
+      <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">Edit Alternatif</h5>
@@ -97,22 +134,22 @@ const EditAlternative = ({ altId, onSuccess }) => {
                 <input
                   type="text"
                   className="form-control"
-                  id="nama"
-                  name="nama"
-                  value={alt.nama}
+                  id="name"
+                  name="name"
+                  value={alt.name}
                   onChange={handleChange}
                   required
                 />
               </div>
               <div className="mb-3">
-                <label htmlFor="atribut" className="form-label">
+                <label htmlFor="attribute" className="form-label">
                   Atribut
                 </label>
                 <select
                   className="form-select"
-                  id="atribut"
-                  name="atribut"
-                  value={alt.atribut}
+                  id="attribute"
+                  name="attribute"
+                  value={alt.attribute}
                   onChange={handleChange}
                   required
                 >
@@ -126,7 +163,7 @@ const EditAlternative = ({ altId, onSuccess }) => {
               <div className="text-center">
                 <button
                   type="submit"
-                  className="btn btn-success"
+                  className="btn btn-success btn-md px-4 fw-semibold"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -137,7 +174,8 @@ const EditAlternative = ({ altId, onSuccess }) => {
                     ></span>
                   ) : (
                     <>
-                      <i className="bi bi-floppy me-2"></i> Simpan
+                      <i className="bi bi-floppy me-2 fw-semibold"></i>
+                      Simpan
                     </>
                   )}
                 </button>

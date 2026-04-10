@@ -1,12 +1,16 @@
 from flask_restful import Resource
 from flask import request
+from flask_jwt_extended import jwt_required
 from schemas.calculate import calculate_schema, calculates_schema
 from config import db
 from models.criteria import Criteria
 from models.alternative import Alternative
 from models.calculate import Calculate
+from limiter import limiter
 
 class CalculateRoute(Resource):
+    decorators = [jwt_required(), limiter.limit("300 per minute")]
+
     def get(self, identifier=None):
         if identifier is not None:
             calculate = Calculate.query.get(identifier)

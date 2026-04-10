@@ -1,9 +1,50 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const sections = [
+    {
+      title: "Menu",
+      items: [
+        {
+          label: "Dashboard",
+          path: "/homepage",
+          icon: "bi bi-grid",
+        },
+      ],
+    },
+    {
+      title: "Master Data",
+      items: [
+        {
+          label: "Kriteria",
+          path: "/criteria",
+          icon: "bi bi-list-check",
+        },
+        {
+          label: "Alternatif",
+          path: "/alternative",
+          icon: "bi bi-people",
+        },
+        {
+          label: "Perhitungan",
+          path: "/calculate",
+          icon: "bi bi-calculator",
+        },
+        {
+          label: "Hasil",
+          path: "/result",
+          icon: "bi bi-trophy",
+        },
+      ],
+    },
+  ];
+
+  const isActive = (path) => location.pathname === path;
 
   const handleLogout = async () => {
     const result = await Swal.fire({
@@ -22,6 +63,7 @@ const Sidebar = () => {
     if (result.isConfirmed) {
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
+
       Swal.fire({
         icon: "success",
         title: "Berhasil Keluar",
@@ -35,57 +77,53 @@ const Sidebar = () => {
     }
   };
 
+  const handleCloseSidebar = () => {
+    document.body.classList.remove("toggle-sidebar");
+  };
+
   return (
-    <aside id="sidebar" className="sidebar">
-      <ul className="sidebar-nav" id="sidebar-nav">
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/homepage">
-            <i className="bi bi-grid"></i>
-            <span>Dashboard</span>
-          </Link>
-        </li>
+    <>
+      <div
+        className="sidebar-overlay"
+        onClick={handleCloseSidebar}
+      ></div>
+      <aside id="sidebar" className="sidebar">
+        <div className="sidebar-nav" id="sidebar-nav">
+          {sections.map((section) => (
+            <div className="sidebar-section" key={section.title}>
+              <p className="sidebar-section-title">{section.title}</p>
+              <ul className="sidebar-section-list">
+                {section.items.map((item) => (
+                  <li className="nav-item" key={item.path}>
+                    <Link
+                      to={item.path}
+                      className={`nav-link modern ${isActive(item.path) ? "active" : ""
+                        }`}
+                      onClick={handleCloseSidebar}
+                    >
+                      <span className="nav-icon">
+                        <i className={item.icon}></i>
+                      </span>
+                      <span className="nav-text">{item.label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
 
-        <li className="nav-heading">Master Data</li>
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/criteria">
-            <i className="bi bi-columns"></i>
-            <span>Kriteria</span>
-          </Link>
-        </li>
-
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/alternative">
-            <i className="bi bi-collection"></i>
-            <span>Alternatif</span>
-          </Link>
-        </li>
-
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/calculate">
-            <i className="bi bi-card-checklist"></i>
-            <span>Perhitungan</span>
-          </Link>
-        </li>
-
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/result">
-            <i className="bi bi-clipboard-data"></i>
-            <span>Hasil</span>
-          </Link>
-        </li>
-
-        <li className="nav-heading">Aksebilitas</li>
-        <li className="nav-item">
+        <div className="sidebar-footer">
           <button
-            className="nav-link btn btn-link collapsed"
+            type="button"
+            className="nav-link modern logout"
             onClick={handleLogout}
           >
-            <i className="bi bi-box-arrow-right"></i>
-            <span>Keluar</span>
+            <span className="nav-text">Keluar</span>
           </button>
-        </li>
-      </ul>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 
